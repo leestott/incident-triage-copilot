@@ -1,0 +1,60 @@
+# ---------------------------------------------------------------------------
+# CI — Lint, Test, and Validate Container Build
+# ---------------------------------------------------------------------------
+# Runs on every push and pull request to main.
+# Steps: lint → unit tests → container build validation
+# ---------------------------------------------------------------------------
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio httpx ruff
+
+      - name: Lint with Ruff
+        run: ruff check src/ tests/
+
+      - name: Run unit tests
+        run: pytest -v --tb=short
+
+  container-build:
+    name: Validate Container Build
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build container image
+        run: docker build -t incident-triage-copilot:ci .
+
+      - name: Verify container starts
+        run: |
+          docker run -d --name test-agent -p 8080:8080 incident-triage-copilot:ci
+          sleep 5
+          curl -sf http://localhost:8080/health | python -m json.tool
+          docker stop test-agent

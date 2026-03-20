@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incident Triage Copilot</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔍</text></svg>">
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+    <div class="header-left">
+        <div class="header-logo">🔍</div>
+        <h1>Incident Triage Copilot</h1>
+    </div>
+    <div class="header-right">
+        <span class="mock-badge" id="mock-badge" style="display:none;">Mock Mode</span>
+        <span style="font-size: 0.8125rem; opacity: 0.85;" id="mode-text">Checking...</span>
+        <div class="status-badge">
+            <span class="status-dot" id="status-dot"></span>
+            <span id="status-text">Connecting...</span>
+        </div>
+    </div>
+</header>
+
+<!-- Mock mode banner (hidden by default, shown via JS when running locally) -->
+<div class="mock-banner" id="mock-banner" style="display:none;">
+    ⚠️ Running in <strong>mock mode</strong> &mdash; agents return heuristic responses, not live AI. Connect to Microsoft Foundry for full capabilities.
+</div>
+
+<!-- Main -->
+<main class="main">
+
+    <!-- Input Section -->
+    <section class="input-section">
+        <div class="card">
+            <div class="card-header">
+                <span class="icon">💬</span> Describe the Incident
+            </div>
+            <div class="card-body">
+                <form class="query-form" id="triage-form">
+                    <div class="form-group">
+                        <label for="query-input">Incident Query</label>
+                        <textarea
+                            id="query-input"
+                            placeholder="Describe the production incident you need help triaging...&#10;&#10;Example: Our API response times have spiked to 5s and we're seeing 503 errors across the payment service."
+                            rows="4"
+                            required
+                        ></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Quick Examples</label>
+                        <div class="examples">
+                            <button type="button" class="example-chip" onclick="useExample('API response times spiked to 5s with 503 errors on the payment service')">API latency spike</button>
+                            <button type="button" class="example-chip" onclick="useExample('OOM kills happening on the order-processor pods every 2 hours')">OOM kills</button>
+                            <button type="button" class="example-chip" onclick="useExample('Database connection pool exhausted, users seeing timeout errors since 3am')">DB connection pool</button>
+                            <button type="button" class="example-chip" onclick="useExample('Certificate expired on the auth service causing login failures')">Cert expiry</button>
+                            <button type="button" class="example-chip" onclick="useExample('Memory leak in the notification service causing gradual degradation')">Memory leak</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="context-input">Context (optional JSON)</label>
+                        <textarea
+                            id="context-input"
+                            class="context-area"
+                            placeholder='{"log_data": "ERROR 2025-03-20 OOM killed process 1234..."}'
+                            rows="3"
+                        ></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-primary" id="submit-btn">
+                        <span class="spinner" id="spinner"></span>
+                        <span id="btn-text">Run Triage</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section class="results-section">
+        <div id="results-container"></div>
+        <div id="results-empty" class="results-empty">
+            <div class="icon">🎯</div>
+            <p>Submit an incident query to see triage results here.</p>
+            <p style="margin-top:0.5rem; font-size:0.8125rem;">The copilot will route your query through specialist agents for research, diagnostics, and remediation.</p>
+        </div>
+    </section>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <!-- Pipeline -->
+        <div class="card">
+            <div class="card-header">
+                <span class="icon">⚙️</span> Agent Pipeline
+            </div>
+            <div class="card-body">
+                <div class="pipeline">
+                    <div class="pipeline-step">
+                        <div class="pipeline-connector">
+                            <div class="step-dot waiting" id="step-receive">1</div>
+                            <div class="step-line" id="line-receive"></div>
+                        </div>
+                        <div class="step-info">
+                            <div class="step-label">Receive</div>
+                            <div class="step-desc">Parse query &amp; route</div>
+                        </div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="pipeline-connector">
+                            <div class="step-dot waiting" id="step-research">2</div>
+                            <div class="step-line" id="line-research"></div>
+                        </div>
+                        <div class="step-info">
+                            <div class="step-label">🔍 Research</div>
+                            <div class="step-desc">Known issues &amp; context</div>
+                        </div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="pipeline-connector">
+                            <div class="step-dot waiting" id="step-diagnostics">3</div>
+                            <div class="step-line" id="line-diagnostics"></div>
+                        </div>
+                        <div class="step-info">
+                            <div class="step-label">🔬 Diagnostics</div>
+                            <div class="step-desc">Root cause analysis</div>
+                        </div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="pipeline-connector">
+                            <div class="step-dot waiting" id="step-remediation">4</div>
+                            <div class="step-line" id="line-remediation"></div>
+                        </div>
+                        <div class="step-info">
+                            <div class="step-label">🛠️ Remediation</div>
+                            <div class="step-desc">Action plan &amp; fixes</div>
+                        </div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="pipeline-connector">
+                            <div class="step-dot waiting" id="step-synthesize">5</div>
+                        </div>
+                        <div class="step-info">
+                            <div class="step-label">📋 Synthesize</div>
+                            <div class="step-desc">Unified triage report</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History -->
+        <div class="card">
+            <div class="card-header">
+                <span class="icon">📜</span> Recent Queries
+            </div>
+            <div class="card-body" style="padding: 0.75rem;">
+                <div class="history-list" id="history-list"></div>
+                <div class="history-empty" id="history-empty">No queries yet</div>
+            </div>
+        </div>
+
+        <!-- About -->
+        <div class="card">
+            <div class="card-header">
+                <span class="icon">ℹ️</span> About
+            </div>
+            <div class="card-body" style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6;">
+                <p><strong>Multi-Agent Incident Triage Copilot</strong></p>
+                <p style="margin-top:0.5rem;">Powered by Microsoft Agent Framework and Microsoft Foundry. Routes incidents through specialist agents for research, diagnostics, and remediation.</p>
+                <p style="margin-top:0.5rem;">
+                    <a href="/docs" target="_blank" style="color: var(--primary); text-decoration: none;">API Docs →</a>
+                </p>
+            </div>
+        </div>
+    </aside>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.3/purify.min.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

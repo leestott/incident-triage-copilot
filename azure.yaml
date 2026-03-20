@@ -1,0 +1,35 @@
+# ---------------------------------------------------------------------------
+# azure.yaml — azd project manifest for Multi-Agent Incident Triage Copilot
+# ---------------------------------------------------------------------------
+# This file tells azd how to build, provision, and deploy the agent.
+# Run `azd up` to provision infrastructure and deploy in one step.
+# ---------------------------------------------------------------------------
+name: incident-triage-copilot
+metadata:
+  template: incident-triage-copilot@0.1.0
+
+services:
+  agent:
+    project: .
+    language: python
+    host: containerapp
+    docker:
+      path: ./Dockerfile
+      context: .
+
+# Infrastructure configuration
+infra:
+  provider: bicep
+  path: ./infra
+
+# Agent extension hooks — azd ai agent commands use these
+hooks:
+  postprovision:
+    shell: pwsh
+    run: |
+      Write-Host "Infrastructure provisioned. Run 'azd ai agent run' to test locally."
+  postdeploy:
+    shell: pwsh
+    run: |
+      Write-Host "Agent deployed! Run 'azd ai agent show' to see endpoint details."
+      Write-Host "Run 'azd ai agent monitor' to stream logs."

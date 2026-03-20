@@ -1,0 +1,67 @@
+# ---------------------------------------------------------------------------
+# agent.yaml — Agent definition for Microsoft Foundry Hosted Agents
+# ---------------------------------------------------------------------------
+# This file describes the agent's identity, model, tools, and orchestration.
+# Generated/updated by `azd ai agent init`. Edit to customize behavior.
+# ---------------------------------------------------------------------------
+name: incident-triage-copilot
+kind: hosted
+description: >
+  Multi-agent incident triage copilot that coordinates research, diagnostics,
+  and remediation planning for production incidents.
+version: 0.1.0
+
+# Model configuration — azd resolves the deployment endpoint automatically
+model:
+  deployment: gpt-4o
+  api_version: "2025-01-01-preview"
+
+# Agent identity
+identity:
+  type: managed  # Uses Managed Identity by default — no key management
+
+# Tools available when deployed to Foundry
+tools:
+  - type: bing_grounding          # Web search for incident research
+    enabled: true
+  - type: file_search              # Search uploaded incident logs
+    enabled: true
+  - type: code_interpreter         # Run analysis code on log data
+    enabled: true
+
+# Multi-agent orchestration configuration
+orchestration:
+  pattern: coordinator             # coordinator | round-robin | sequential
+  max_turns: 10                    # Safety limit on agent-to-agent turns
+  shared_context: true             # Agents share a memory context
+
+# Specialist agent definitions (used by the coordinator)
+agents:
+  - name: research-agent
+    role: research
+    description: "Searches the web and knowledge bases for incident context"
+    system_prompt_file: ./src/prompts/research_agent.md
+
+  - name: diagnostics-agent
+    role: diagnostics
+    description: "Analyzes logs, traces, and metrics to identify root cause"
+    system_prompt_file: ./src/prompts/diagnostics_agent.md
+
+  - name: remediation-agent
+    role: remediation
+    description: "Creates runbooks and remediation checklists"
+    system_prompt_file: ./src/prompts/remediation_agent.md
+
+# Deployment target
+hosting:
+  type: foundry-hosted-agent       # Microsoft Foundry Hosted Agent
+  container:
+    registry: ${ACR_NAME}          # Resolved from azd env
+    image: incident-triage-copilot
+    tag: ${IMAGE_TAG}
+
+# Observability
+monitoring:
+  application_insights: true
+  log_level: INFO
+  trace_correlation: true           # Include correlation IDs in responses

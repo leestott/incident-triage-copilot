@@ -1,0 +1,43 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# Environment files (may contain secrets locally)
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Azure
+.azure/
+
+# Test / coverage
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Docker
+*.log
+
+# Playwright MCP (local browser automation artefacts)
+.playwright-mcp/
+
+# Foundry metadata (environment-specific)
+.foundry/

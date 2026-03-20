@@ -1,0 +1,27 @@
+# ---------------------------------------------------------------------------
+# Multi-Agent Incident Triage Copilot
+# ---------------------------------------------------------------------------
+# Python dependencies for the agent runtime.
+# Uses Microsoft Agent Framework with Microsoft Foundry integration.
+# ---------------------------------------------------------------------------
+
+# Microsoft Agent Framework
+azure-ai-projects>=1.0.0b7
+azure-ai-agents>=1.0.0b4
+azure-identity>=1.19.0
+aiohttp>=3.9.0
+
+# Web framework for hosting the agent endpoint
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+
+# Observability
+opentelemetry-api>=1.28.0
+opentelemetry-sdk>=1.28.0
+azure-monitor-opentelemetry>=1.6.0
+
+# Utilities
+pydantic>=2.9.0
+pyyaml>=6.0
+python-dotenv>=1.0.0
+httpx>=0.27.0

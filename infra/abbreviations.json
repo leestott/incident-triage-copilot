@@ -1,0 +1,10 @@
+{
+  "managedIdentity": "id-",
+  "aiHub": "aihub-",
+  "aiProject": "aiproj-",
+  "acr": "cr",
+  "containerApp": "ca-",
+  "appInsights": "appi-",
+  "logAnalytics": "log-",
+  "containerAppEnv": "cae-"
+}
