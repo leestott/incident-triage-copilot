@@ -5,9 +5,10 @@
 # Uses Microsoft Agent Framework with Microsoft Foundry integration.
 # ---------------------------------------------------------------------------
 
-# Microsoft Agent Framework
-azure-ai-projects>=1.0.0b7
-azure-ai-agents>=1.0.0b4
+# Microsoft Agent Framework — GA versions (March 2026)
+# See: https://learn.microsoft.com/en-us/agent-framework/support/upgrade/python-2026-significant-changes
+azure-ai-projects>=2.0.0,<3.0
+azure-ai-agents>=1.1.0,<2.0
 azure-identity>=1.19.0
 aiohttp>=3.9.0
 
